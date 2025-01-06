@@ -1,3 +1,6 @@
+# This repository is lacking behind, new software and library requirements will be soon updated by me. 
+
+
 # Learning High-Speed Flight in the Wild
 
 This repo contains the code associated with the paper Learning Agile Flight in the Wild.
