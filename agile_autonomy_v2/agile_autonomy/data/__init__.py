@@ -1,7 +1,9 @@
 """Data loading and processing."""
 
-# Dataset implementations will be added here
-# from .dataset import RolloutDataset
-# from .transforms import DepthTransform
+from .dataset import RolloutDataset, create_dataloader, collate_fn
 
-__all__ = []
+__all__ = [
+    "RolloutDataset",
+    "create_dataloader",
+    "collate_fn",
+]

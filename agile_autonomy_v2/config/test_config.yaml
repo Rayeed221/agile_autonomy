@@ -1,0 +1,68 @@
+# Test/Evaluation Configuration for Agile Autonomy
+
+experiment:
+  name: "planet_test_forest"
+  seed: 42
+  device: "cuda"  # "cuda" or "cpu"
+
+# Model configuration (must match training)
+model:
+  backbone: "mobilenet_v2"
+  use_rgb: false
+  use_depth: true
+  img_height: 224
+  img_width: 224
+  state_dim: 3
+  out_seq_len: 10
+  modes: 3
+  seq_len: 1
+  freeze_backbone: false
+
+  inputs:
+    position: false
+    attitude: true
+    velocity: true
+    velocity_frame: "bf"
+    bodyrates: true
+
+# Checkpoint to load
+checkpoint:
+  path: "data/checkpoints/best_model.pt"
+
+# Inference parameters
+inference:
+  batch_size: 1
+  network_frequency: 15.0  # Hz
+  prediction_horizon: 10  # Steps
+  time_step: 0.1  # Seconds per step
+
+# Test environment settings
+environment:
+  type: "forest"  # "forest" or "obstacles"
+  avg_tree_spacing: 5.0
+  num_trees: 100
+  area_size: [100, 100]
+
+# Test scenarios
+test:
+  num_rollouts: 10
+  max_time: 30.0  # seconds
+  speeds: [5.0, 7.0, 9.0]  # m/s to test
+  start_positions:
+    - [0, 0, 2.0, 0]  # x, y, z, yaw
+    - [0, 0, 2.0, 1.57]
+    - [0, 0, 2.0, 3.14]
+
+# Metrics to compute
+metrics:
+  track_success_rate: true
+  track_collisions: true
+  track_trajectory_smoothness: true
+  save_trajectories: true
+  save_images: false
+
+# Output
+output:
+  results_dir: "results"
+  save_predictions: true
+  save_visualizations: true

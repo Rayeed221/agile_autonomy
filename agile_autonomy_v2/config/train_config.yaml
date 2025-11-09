@@ -1,0 +1,75 @@
+# Training Configuration for Agile Autonomy
+
+experiment:
+  name: "planet_forest_7ms"
+  seed: 42
+  device: "cuda"  # "cuda" or "cpu"
+
+# Model configuration
+model:
+  backbone: "mobilenet_v2"
+  use_rgb: false
+  use_depth: true
+  img_height: 224
+  img_width: 224
+  state_dim: 3  # x, y, z
+  out_seq_len: 10  # Number of future steps
+  modes: 3  # Number of trajectory modes
+  seq_len: 1  # Input sequence length
+  freeze_backbone: false
+
+  # State input configuration
+  inputs:
+    position: false
+    attitude: true  # Use rotation matrix (9 values)
+    velocity: true  # Always included
+    velocity_frame: "bf"  # "bf" (body frame) or "world"
+    bodyrates: true
+
+# Training parameters
+training:
+  epochs: 150
+  batch_size: 8
+  learning_rate: 0.001
+  weight_decay: 0.0
+  scheduler: "cosine"  # "cosine" or "step" or "none"
+  warmup_epochs: 10
+  eta_min: 0.000001
+  gradient_clip: 1.0
+
+  # Loss weights
+  mixture_weight: 1.0
+  collision_weight: 1.0
+  use_collision_loss: true
+
+  # Collision parameters
+  quadrotor_radius: 0.3  # meters
+  environment_threshold: 0.8  # meters
+
+  # Checkpointing
+  save_every_n_epochs: 5
+
+  # Early stopping
+  use_early_stopping: false
+  early_stopping_patience: 20
+
+# Dataset configuration
+dataset:
+  train_dir: "data/processed/train"
+  val_dir: "data/processed/val"
+  num_workers: 4
+  pin_memory: true
+
+# Logging configuration
+logging:
+  use_tensorboard: true
+  tensorboard_dir: "runs"
+  use_wandb: false
+  wandb_project: "agile-autonomy"
+  log_interval: 100
+  checkpoint_dir: "data/checkpoints"
+
+# Reference tracking (for data generation)
+ref_frame: "bf"  # Body frame
+track_global_traj: false
+future_time: 5.0  # seconds
