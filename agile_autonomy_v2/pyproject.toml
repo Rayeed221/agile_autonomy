@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agile-autonomy"
+version = "2.0.0"
+description = "Modern Python implementation of Agile Autonomy for high-speed quadrotor navigation"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Agile Autonomy Contributors"}
+]
+keywords = ["robotics", "deep-learning", "quadrotor", "navigation", "computer-vision"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.1.0",
+    "torchvision>=0.16.0",
+    "pybullet>=3.2.5",
+    "gym>=0.26.0",
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+    "pandas>=2.0.0",
+    "h5py>=3.9.0",
+    "opencv-python>=4.8.0",
+    "pillow>=10.0.0",
+    "open3d>=0.18.0",
+    "pyquaternion>=1.1.2",
+    "matplotlib>=3.7.0",
+    "plotly>=5.17.0",
+    "imageio>=2.31.0",
+    "tensorboard>=2.14.0",
+    "pyyaml>=6.0.0",
+    "omegaconf>=2.3.0",
+    "tqdm>=4.66.0",
+    "rich>=13.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.7.0",
+    "ruff>=0.0.287",
+    "jupyter>=1.0.0",
+    "ipython>=8.0.0",
+]
+wandb = ["wandb>=0.15.0"]
+export = ["onnx>=1.14.0", "onnxruntime>=1.16.0"]
+
+[project.urls]
+Homepage = "https://github.com/uzh-rpg/agile_autonomy"
+Documentation = "https://github.com/uzh-rpg/agile_autonomy"
+Repository = "https://github.com/uzh-rpg/agile_autonomy"
+
+[tool.setuptools]
+packages = ["agile_autonomy"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310']
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]  # Line too long (handled by black)
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

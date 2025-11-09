@@ -1,0 +1,45 @@
+# Simulation Configuration
+
+experiment:
+  name: "forest_navigation"
+  seed: 42
+
+physics:
+  timestep: 0.004166667  # 1/240 Hz
+  gravity: -9.81
+  max_steps: 10000
+
+quadrotor:
+  mass: 0.775  # kg
+  arm_length: 0.17  # meters
+  max_thrust: 15.0  # Newtons
+  max_torque: 0.5  # Nm
+
+camera:
+  width: 640
+  height: 480
+  fov: 90.0  # degrees
+  near: 0.1  # meters
+  far: 100.0  # meters
+
+imu:
+  accel_noise: 0.0  # m/s^2 std
+  gyro_noise: 0.0  # rad/s std
+
+environment:
+  type: "forest"  # "forest" or "obstacles"
+  tree_spacing: 5.0  # meters (average)
+  tree_spacing_std: 1.0  # meters
+  area_size: [100, 100]  # meters [width, length]
+  num_trees: 100
+  tree_radius: 0.3  # meters
+  tree_height: 8.0  # meters
+
+controller:
+  position_p: 1.0
+  position_d: 0.5
+  position_i: 0.0
+  attitude_p: 3.0
+  attitude_d: 0.3
+  attitude_i: 0.0
+  max_tilt: 0.785  # radians (45 degrees)

@@ -1,0 +1,54 @@
+# Agile Autonomy v2 - Requirements
+# Python 3.8+
+
+# Core ML (choose one)
+torch>=2.1.0
+torchvision>=0.16.0
+# tensorflow>=2.15.0  # Alternative to PyTorch
+
+# Simulation
+pybullet>=3.2.5
+gym>=0.26.0
+
+# Scientific Computing
+numpy>=1.24.0
+scipy>=1.11.0
+pandas>=2.0.0
+h5py>=3.9.0
+
+# Computer Vision
+opencv-python>=4.8.0
+pillow>=10.0.0
+open3d>=0.18.0
+
+# 3D Math & Transformations
+pyquaternion>=1.1.2
+# pytransform3d>=3.3.0  # Optional, using scipy instead
+
+# Visualization
+matplotlib>=3.7.0
+plotly>=5.17.0
+imageio>=2.31.0
+imageio-ffmpeg>=0.4.9
+
+# Experiment Tracking
+tensorboard>=2.14.0
+# wandb>=0.15.0  # Optional but recommended for experiment tracking
+
+# Configuration
+pyyaml>=6.0.0
+omegaconf>=2.3.0
+# hydra-core>=1.3.0  # Optional, advanced config management
+
+# Utilities
+tqdm>=4.66.0
+rich>=13.5.0
+
+# Development
+pytest>=7.4.0
+black>=23.7.0
+ruff>=0.0.287
+
+# Optional: Model Export
+# onnx>=1.14.0
+# onnxruntime>=1.16.0
