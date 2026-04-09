@@ -3,7 +3,10 @@ from tensorflow.keras import Model
 from tensorflow.keras.layers import Dense, Conv2D, LeakyReLU, Conv1D
 from tensorflow.keras.layers import Flatten, GlobalAveragePooling2D, MaxPool2D, LayerNormalization, BatchNormalization
 # from tensorflow.python.keras.applications import densenet
-from tensorflow.python.keras.applications import mobilenet
+try:
+    from tensorflow.python.keras.applications import mobilenet
+except ImportError:
+    from tensorflow.keras.applications import mobilenet
 
 
 def create_network(settings):
@@ -18,13 +21,13 @@ class Network(Model):
     def create(self):
         self._create()
 
-    def call(self, x):
-        return self._internal_call(x)
+    def call(self, x, training=False):
+        return self._internal_call(x, training=training)
 
     def _create(self):
         raise NotImplementedError
 
-    def _internal_call(self):
+    def _internal_call(self, x, training=False):
         raise NotImplementedError
 
 
@@ -101,12 +104,12 @@ class PlaNet(Network):
     def _conv_branch(self, image):
         x = self._pf(image)
         for f in self.backbone:
-            x = f(x)
-        x = tf.reshape(x, (x.shape[0], -1, x.shape[-1]))  # (batch_size, MxM, C)
+            x = f(x, training=self._training_flag)
+        x = tf.reshape(x, (tf.shape(x)[0], -1, x.shape[-1]))  # (batch_size, MxM, C)
         for f in self.resize_op:
             x = f(x)
         # x [batch_size, M, M, 128]
-        x = tf.reshape(x, (x.shape[0], -1))  # (batch_size, MxMx128)
+        x = tf.reshape(x, (tf.shape(x)[0], -1))  # (batch_size, MxMx128)
         return x
 
     def _image_branch(self, img_seq):
@@ -161,7 +164,8 @@ class PlaNet(Network):
         img_embeddings = self._image_branch(img_seq)
         return img_embeddings
 
-    def _internal_call(self, inputs):
+    def _internal_call(self, inputs, training=False):
+        self._training_flag = training
         if self.config.use_position:
             imu_obs = inputs['imu']
         else:

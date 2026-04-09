@@ -37,13 +37,13 @@ class PlanLearner(object):
         self.cost_loss = TrajectoryCostLoss(ref_frame=self.config.ref_frame, state_dim=self.config.state_dim)
         self.cost_loss_v = TrajectoryCostLoss(ref_frame=self.config.ref_frame, state_dim=self.config.state_dim)
 
-        # rate scheduler
-        self.learning_rate_fn = tf.keras.experimental.CosineDecayRestarts(
-            			1e-3,
-            			50000,
-            			1.5,
-            			0.75,
-            			0.01)
+        # rate scheduler (tf.keras.experimental removed in Keras 3)
+        try:
+            self.learning_rate_fn = tf.keras.experimental.CosineDecayRestarts(
+                        1e-3, 50000, 1.5, 0.75, 0.01)
+        except AttributeError:
+            self.learning_rate_fn = tf.keras.optimizers.schedules.CosineDecayRestarts(
+                        1e-3, 50000, 1.5, 0.75, 0.01)
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate_fn)
 
@@ -72,7 +72,7 @@ class PlanLearner(object):
     @tf.function
     def train_step(self, inputs, labels):
         with tf.GradientTape() as tape:
-            predictions = self.network(inputs)
+            predictions = self.network(inputs, training=True)
             space_loss = self.space_loss(labels, predictions)
             cost_loss = self.cost_loss((inputs['roll_id'], inputs['imu'][:, -1, :12]), predictions)
             loss = space_loss + cost_loss
@@ -84,12 +84,11 @@ class PlanLearner(object):
         return gradients
 
     @tf.function
-    def val_step(self, inputs, labels):#, epoch, step):
+    def val_step(self, inputs, labels):
         """
         Perform validation step.
         """
-
-        predictions = self.network(inputs)
+        predictions = self.network(inputs, training=False)
         space_loss = self.space_loss(labels, predictions)
         cost_loss = self.cost_loss_v((inputs['roll_id'], inputs['imu'][:, -1, :12]), predictions)
         self.val_space_loss.update_state(space_loss)
@@ -135,8 +134,8 @@ class PlanLearner(object):
         else:
             # We are in dagger mode, so let us reset the best loss
             self.min_val_loss = np.inf
-            self.train_space_loss.reset_states()
-            self.val_space_loss.reset_states()
+            self.train_space_loss.reset_state()
+            self.val_space_loss.reset_state()
 
         dataset_train = create_dataset(self.config.train_dir,
                                        self.config, training=True)
@@ -148,21 +147,15 @@ class PlanLearner(object):
         self.cost_loss_v.add_pointclouds(dataset_val.pointclouds)
 
         for epoch in range(self.config.max_training_epochs):
-            # Train
-            # Set learning_phase for keras (1 is train, 0 is test)
-            if self.config.freeze_backbone:
-                tf.keras.backend.set_learning_phase(0)
-            else:
-                tf.keras.backend.set_learning_phase(1)
+            # Train (learning_phase replaced by training=True/False in model calls)
             for k, (features, label, _) in enumerate(tqdm(dataset_train.batched_dataset)):
                 features = self.adapt_input_data(features)
                 gradients = self.train_step(features, label)
                 if tf.equal(k % self.config.summary_freq, 0):
                     self.write_train_summaries(features, gradients)
-                    self.train_space_loss.reset_states()
-                    self.train_cost_loss.reset_states()
+                    self.train_space_loss.reset_state()
+                    self.train_cost_loss.reset_state()
             # Eval
-            tf.keras.backend.set_learning_phase(0)
             for k, (features, label, _) in enumerate(tqdm(dataset_val.batched_dataset)):
                 features = self.adapt_input_data(features)
                 self.val_step(features, label)
@@ -174,8 +167,8 @@ class PlanLearner(object):
                                   step=tf.cast(self.global_epoch, dtype=tf.int64))
                 tf.summary.scalar("Validation Cost Loss", val_cost_loss,
                                   step=tf.cast(self.global_epoch, dtype=tf.int64))
-            self.val_space_loss.reset_states()
-            self.val_cost_loss.reset_states()
+            self.val_space_loss.reset_state()
+            self.val_cost_loss.reset_state()
 
             self.global_epoch = self.global_epoch + 1
             self.ckpt.step.assign_add(1)
@@ -207,8 +200,8 @@ class PlanLearner(object):
                 self.val_step(features, label)
             val_space_loss = self.val_space_loss.result()
             val_cost_loss = self.val_cost_loss.result()
-            self.val_space_loss.reset_states()
-            self.val_cost_loss.reset_states()
+            self.val_space_loss.reset_state()
+            self.val_cost_loss.reset_state()
             print("Testing Space Loss: {:.4f} Testing Cost Loss: {:.4f}".format(val_space_loss, val_cost_loss))
         elif self.config.mode == 'prediction':
 
