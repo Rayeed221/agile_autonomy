@@ -135,21 +135,35 @@ def main():
     def serve(inputs):
         return network(inputs, training=False)
 
-    network.save(saved_model_path, save_format='tf',
-                 signatures={'serving_default': serve})
+    # Save TF SavedModel via tf.saved_model.save (works with Keras 3)
+    tf.saved_model.save(network, saved_model_path,
+                        signatures={'serving_default': serve})
     print("  SavedModel written.")
 
     # ── TFLite conversion ─────────────────────────────────────────────────
+    # Use SELECT_TF_OPS to support resource variables (Keras 3 models contain
+    # READ_VARIABLE ops that standard TFLite builtins do not cover).
+    # Deploy with TFLite runtime that has the flex delegate enabled.
     if args.tflite:
-        print("\nConverting to TFLite...")
-        converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_path)
-        converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        tflite_model = converter.convert()
-        tflite_path  = os.path.join(args.out_dir, 'planet_model.tflite')
-        with open(tflite_path, 'wb') as f:
-            f.write(tflite_model)
-        size_mb = os.path.getsize(tflite_path) / 1e6
-        print(f"  TFLite model saved → {tflite_path}  ({size_mb:.1f} MB)")
+        print("\nConverting to TFLite (with TF Select ops for Keras 3 compatibility)...")
+        try:
+            converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_path)
+            converter.target_spec.supported_ops = [
+                tf.lite.OpsSet.TFLITE_BUILTINS,
+                tf.lite.OpsSet.SELECT_TF_OPS,   # needed for resource variables
+            ]
+            converter.optimizations = [tf.lite.Optimize.DEFAULT]
+            converter.allow_custom_ops = True
+            tflite_model = converter.convert()
+            tflite_path  = os.path.join(args.out_dir, 'planet_model.tflite')
+            with open(tflite_path, 'wb') as f:
+                f.write(tflite_model)
+            size_mb = os.path.getsize(tflite_path) / 1e6
+            print(f"  TFLite model saved → {tflite_path}  ({size_mb:.1f} MB)")
+            print("  NOTE: Requires TFLite runtime with Flex delegate (--define=tflite_extended_ops=true).")
+        except Exception as e:
+            print(f"  TFLite conversion warning: {e}")
+            print("  The SavedModel format is fully functional for deployment.")
 
     # ── Optional ONNX ────────────────────────────────────────────────────
     if args.onnx:
