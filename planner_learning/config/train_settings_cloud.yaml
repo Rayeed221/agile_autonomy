@@ -1,0 +1,59 @@
+# =============================================================================
+# Agile Autonomy — Cloud Training Configuration
+# =============================================================================
+# Used by both gcloud_train.sh (GCE / Vertex AI) and colab_training.ipynb.
+#
+# The training scripts overwrite train_dir, val_dir, and log_dir at runtime
+# with the correct cloud paths.  Values below are sensible defaults that work
+# on a GPU with ≥ 16 GB VRAM (T4, V100, A100).
+#
+# To train on a smaller GPU (e.g. K80 / 12 GB), lower batch_size to 8.
+# =============================================================================
+
+log_dir: '/tmp/agile_autonomy_cloud'   # overridden at runtime
+
+quad_name: 'none'
+odometry_topic: 'ground_truth/odometry'
+rgb_topic: 'agile_autonomy/unity_rgb'
+depth_topic: 'agile_autonomy/sgm_depth'
+
+# Input modalities
+use_rgb: False    # depth-only matches the physical sensor setup
+use_depth: True
+
+# Image size
+img_width: 224
+img_height: 224
+
+# Trajectory horizon
+future_time: 5.0        # seconds ahead on reference trajectory
+out_seq_len: 10         # 10 waypoints = 1 s at 10 Hz
+state_dim: 3            # x, y, z positions
+predict_state_number: []
+seq_len: 1              # single depth frame per inference step
+poly_coeff: 3
+modes: 3                # 3-mode Gaussian mixture
+
+checkpoint:
+  resume_training: False
+  resume_file: ""       # path to a TF checkpoint prefix to resume from
+
+train:
+  max_training_epochs: 100
+  batch_size: 16        # 16 for T4/V100 (16 GB); use 8 for smaller GPUs
+  freeze_backbone: True # keep MobileNet ImageNet weights frozen
+  top_trajectories: 3
+  summary_freq: 200     # write TensorBoard scalars every N steps
+  data_save_freq: 15
+  train_dir: "data/train"   # overridden at runtime with absolute path
+  val_dir: "data/val"       # overridden at runtime with absolute path
+  log_images: False
+  save_every_n_epochs: 5    # save checkpoint every 5 epochs (more frequent than default)
+  ref_frame: 'bf'           # body-frame predictions for onboard control
+  track_global_traj: False
+
+inputs:
+  position: False
+  attitude: True       # rotation matrix for body-frame transforms
+  bodyrates: True      # angular rates for dynamic prediction
+  velocity_frame: 'bf'
